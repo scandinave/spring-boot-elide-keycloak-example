@@ -1,6 +1,9 @@
 package com.example.demo.controllers;
 
+import java.io.UnsupportedEncodingException;
+import java.security.NoSuchAlgorithmException;
 import java.security.Principal;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.persistence.EntityManagerFactory;
@@ -9,13 +12,17 @@ import javax.transaction.Transactional;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
+import com.example.demo.check.IsOwner;
+import com.example.demo.services.OidcUtils;
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.ElideSettingsBuilder;
 import com.yahoo.elide.core.DataStore;
 import com.yahoo.elide.datastores.jpa.JpaDataStore;
 import com.yahoo.elide.datastores.jpa.transaction.NonJtaTransaction;
+import com.yahoo.elide.security.checks.Check;
 
+import org.keycloak.KeycloakSecurityContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +31,13 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.HandlerMapping;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 
 @RestController
 public class ElideController {
@@ -101,16 +115,32 @@ public class ElideController {
          */
         final String restOfTheUrl = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
-        DataStore dataStore = new JpaDataStore(() -> emf.createEntityManager(), (em) -> new NonJtaTransaction(em));
-        ElideSettings settings = new ElideSettingsBuilder(dataStore).build();
-        Elide elide = new Elide(settings);
+        final KeycloakSecurityContext keycloakSecurityContext = (KeycloakSecurityContext) request
+                .getAttribute(KeycloakSecurityContext.class.getName());
 
-        final String fixedPath = restOfTheUrl.replaceAll("^/", "");
+        final String accessToken = keycloakSecurityContext.getTokenString();
+        String rpt = OidcUtils.requestRPT(accessToken);
+        try {
+            Claims claims = OidcUtils.extractToken(rpt, "ede3c5fd-6888-45d4-ac32-20cae58c0ee2");
+            HashMap<String, Class<? extends Check>> checks = new HashMap<String, Class<? extends Check>>();
+            checks.put("it's the user profile", IsOwner.Inline.class);
 
-        /*
-         * Now that the boilerplate initialisation is done, we let the caller do
-         * something useful
-         */
-        return elideCallable.call(elide, fixedPath);
+            DataStore dataStore = new JpaDataStore(() -> emf.createEntityManager(), (em) -> new NonJtaTransaction(em));
+            // EntityDictionary dictionary = new EntityDictionary(checks);
+            ElideSettings settings = new ElideSettingsBuilder(dataStore).build();
+            Elide elide = new Elide(settings);
+
+            final String fixedPath = restOfTheUrl.replaceAll("^/", "");
+
+            /*
+             * Now that the boilerplate initialisation is done, we let the caller do
+             * something useful
+             */
+            return elideCallable.call(elide, fixedPath);
+        } catch (SignatureException | ExpiredJwtException | UnsupportedJwtException | MalformedJwtException
+                | IllegalArgumentException | UnsupportedEncodingException e) {
+            return "{}";
+        }
+
     }
 }

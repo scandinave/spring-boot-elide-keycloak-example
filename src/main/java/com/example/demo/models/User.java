@@ -6,7 +6,9 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 import com.yahoo.elide.annotation.Include;
+import com.yahoo.elide.annotation.ReadPermission;
 
+@ReadPermission(expression = "it's the user profile")
 @Include(rootLevel = true)
 @Entity
 public class User {
