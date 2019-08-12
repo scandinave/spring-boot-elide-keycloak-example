@@ -13,6 +13,8 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
 import com.example.demo.check.IsOwner;
+import com.example.demo.services.ElideSettingsBuilderAugmented;
+import com.example.demo.services.KeycloakPermissionExecutor;
 import com.example.demo.services.OidcUtils;
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideSettings;
@@ -118,29 +120,20 @@ public class ElideController {
         final KeycloakSecurityContext keycloakSecurityContext = (KeycloakSecurityContext) request
                 .getAttribute(KeycloakSecurityContext.class.getName());
 
-        final String accessToken = keycloakSecurityContext.getTokenString();
-        String rpt = OidcUtils.requestRPT(accessToken);
-        try {
-            Claims claims = OidcUtils.extractToken(rpt, "ede3c5fd-6888-45d4-ac32-20cae58c0ee2");
-            HashMap<String, Class<? extends Check>> checks = new HashMap<String, Class<? extends Check>>();
-            checks.put("it's the user profile", IsOwner.Inline.class);
+        DataStore dataStore = new JpaDataStore(() -> emf.createEntityManager(), (em) -> new NonJtaTransaction(em));
+        // EntityDictionary dictionary = new EntityDictionary(checks);
+        ElideSettings settings = new ElideSettingsBuilderAugmented(dataStore)
+                .withParams("keycloak", keycloakSecurityContext)
+                .withPermissionExecutor(KeycloakPermissionExecutor.class).build();
+        Elide elide = new Elide(settings);
 
-            DataStore dataStore = new JpaDataStore(() -> emf.createEntityManager(), (em) -> new NonJtaTransaction(em));
-            // EntityDictionary dictionary = new EntityDictionary(checks);
-            ElideSettings settings = new ElideSettingsBuilder(dataStore).build();
-            Elide elide = new Elide(settings);
+        final String fixedPath = restOfTheUrl.replaceAll("^/", "");
 
-            final String fixedPath = restOfTheUrl.replaceAll("^/", "");
-
-            /*
-             * Now that the boilerplate initialisation is done, we let the caller do
-             * something useful
-             */
-            return elideCallable.call(elide, fixedPath);
-        } catch (SignatureException | ExpiredJwtException | UnsupportedJwtException | MalformedJwtException
-                | IllegalArgumentException | UnsupportedEncodingException e) {
-            return "{}";
-        }
+        /*
+         * Now that the boilerplate initialisation is done, we let the caller do
+         * something useful
+         */
+        return elideCallable.call(elide, fixedPath);
 
     }
 }

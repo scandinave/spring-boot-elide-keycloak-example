@@ -1,14 +1,19 @@
 package com.example.demo.services;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
 import javax.crypto.KeyGenerator;
+import javax.crypto.Mac;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
 
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.consumer.JwtConsumer;
@@ -27,6 +32,8 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 
 public final class OidcUtils {
+
+    public static final String ALGORITM_HMACSHA256 = "HmacSHA256";
 
     private OidcUtils() {
     }
@@ -55,33 +62,36 @@ public final class OidcUtils {
     }
 
     /**
-     * Decode a JWT token and verify it's signature
+     * Verify the token signature
      * 
+     * @param jwt the token to verify
+     * @param key the key used to signed the token
+     * @return
      * @throws NoSuchAlgorithmException
+     * @throws InvalidKeyException
+     * @throws IllegalStateException
      * @throws UnsupportedEncodingException
-     * @throws IllegalArgumentException
-     * @throws MalformedJwtException
-     * @throws UnsupportedJwtException
-     * @throws ExpiredJwtException
-     * @throws SignatureException
      */
-    public static Claims extractToken(String token, String signinKey) throws SignatureException, ExpiredJwtException,
-            UnsupportedJwtException, MalformedJwtException, IllegalArgumentException, UnsupportedEncodingException {
-        // JwtConsumer jwtConsumer = new JwtConsumerBuilder().setRequireExpirationTime()
-        // // the JWT must have an expiration
-        // time
-        // .setRequireSubject() // the JWT must have a subject claim
-        // // .setExpectedIssuer("Issuer") // whom the JWT needs to have been issued by
-        // // .setExpectedAudience("Audience") // to whom the JWT is intended for
-        // .setVerificationKey(signinKey.getBytes("UTF-8")) // verify the signature with
-        // the public key
-        // .build(); // create the JwtConsumer instance
+    public static boolean validToken(String jwt, String key, String algoritm)
+            throws NoSuchAlgorithmException, InvalidKeyException, IllegalStateException, UnsupportedEncodingException {
+        String[] token = jwt.split("\\.");
+        String header = token[0];
+        String payload = token[1];
+        String originalSignature = token[2];
 
-        // JwtClaims jwtClaims = jwtConsumer.processToClaims(jwt);
-        // System.out.println("JWT validation succeeded! ");
+        SecretKeySpec secret = new SecretKeySpec(Base64.getDecoder().decode(key), algoritm);
+        Mac mac = Mac.getInstance(algoritm);
+        mac.init(secret);
 
-        // return Jwts.parser()
-        // .setSigningKey(signinKey.getBytes("UTF-8"))
-        // .parseClaimsJws(token).getBody();
-        return null;
+        StringBuilder headerAndPayload = new StringBuilder(header).append(".").append(payload);
+
+        byte[] signatureBytes = mac.doFinal(headerAndPayload.toString().getBytes(StandardCharsets.UTF_8.name()));
+        String calculatedSignature = Base64.getUrlEncoder().withoutPadding().encodeToString(signatureBytes);
+
+        return calculatedSignature.equals(originalSignature);
+    }
+
+    public static extractClaims(String jwt) {
+
+    }
 }
