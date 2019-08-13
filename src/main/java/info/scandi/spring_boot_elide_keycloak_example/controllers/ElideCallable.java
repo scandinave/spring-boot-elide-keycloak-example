@@ -1,4 +1,4 @@
-package com.example.demo.controllers;
+package info.scandi.spring_boot_elide_keycloak_example.controllers;
 
 import com.yahoo.elide.Elide;
 

@@ -1,4 +1,4 @@
-package com.example.demo;
+package info.scandi.spring_boot_elide_keycloak_example;
 
 import org.apache.catalina.connector.Connector;
 import org.springframework.boot.web.embedded.tomcat.TomcatConnectorCustomizer;

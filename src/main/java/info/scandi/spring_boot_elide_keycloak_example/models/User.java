@@ -1,4 +1,4 @@
-package com.example.demo.models;
+package info.scandi.spring_boot_elide_keycloak_example.models;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;

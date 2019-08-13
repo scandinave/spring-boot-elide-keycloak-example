@@ -1,4 +1,4 @@
-package com.example.demo.services;
+package info.scandi.spring_boot_elide_keycloak_example.services;
 
 import java.util.HashMap;
 import java.util.Map;

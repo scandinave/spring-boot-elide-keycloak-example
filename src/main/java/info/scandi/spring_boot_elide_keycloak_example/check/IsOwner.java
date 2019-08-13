@@ -1,6 +1,6 @@
-package com.example.demo.check;
+package info.scandi.spring_boot_elide_keycloak_example.check;
 
-import com.example.demo.models.User;
+import info.scandi.spring_boot_elide_keycloak_example.models.User;
 import com.yahoo.elide.security.ChangeSpec;
 import com.yahoo.elide.security.RequestScope;
 import com.yahoo.elide.security.checks.CommitCheck;

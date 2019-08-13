@@ -1,4 +1,4 @@
-package com.example.demo.controllers;
+package info.scandi.spring_boot_elide_keycloak_example.controllers;
 
 import java.io.UnsupportedEncodingException;
 import java.security.NoSuchAlgorithmException;
@@ -12,10 +12,10 @@ import javax.transaction.Transactional;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 
-import com.example.demo.check.IsOwner;
-import com.example.demo.services.ElideSettingsBuilderAugmented;
-import com.example.demo.services.KeycloakPermissionExecutor;
-import com.example.demo.services.OidcUtils;
+import info.scandi.spring_boot_elide_keycloak_example.check.IsOwner;
+import info.scandi.spring_boot_elide_keycloak_example.services.ElideSettingsBuilderAugmented;
+import info.scandi.spring_boot_elide_keycloak_example.services.KeycloakPermissionExecutor;
+import info.scandi.spring_boot_elide_keycloak_example.services.OidcUtils;
 import com.yahoo.elide.Elide;
 import com.yahoo.elide.ElideSettings;
 import com.yahoo.elide.ElideSettingsBuilder;

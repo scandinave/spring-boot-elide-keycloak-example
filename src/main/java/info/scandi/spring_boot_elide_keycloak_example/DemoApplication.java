@@ -1,4 +1,4 @@
-package com.example.demo;
+package info.scandi.spring_boot_elide_keycloak_example;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
